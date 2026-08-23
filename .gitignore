@@ -1,0 +1,8 @@
+# Private / large brand assets — not for public GitHub
+DYSTIL-Mood-board_1-2026.pdf
+moodboard/
+
+# Secrets
+.env
+.env.*
+!.env.example
