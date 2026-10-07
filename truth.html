@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DYSTIL — a topic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050505;
+      --gold: #e8a317;
+      --white: #f4f4f2;
+      --mute: rgba(244, 244, 242, 0.42);
+      --hairline: rgba(244, 244, 242, 0.16);
+      --serif: "Instrument Serif", "Times New Roman", serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--white);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    button, input { font-family: inherit; }
+    button { cursor: pointer; }
+
+    .page { min-height: 100vh; position: relative; }
+
+    .grain {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.045;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    header {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.75rem 2.25rem 0.4rem;
+      max-width: 88rem;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-size: 1.05rem;
+      letter-spacing: 0.62em;
+      font-weight: 300;
+      padding-left: 0.12em;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .logo .y { color: var(--gold); }
+
+    .here {
+      font-size: 0.55rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 76rem;
+      margin: 0 auto;
+      padding: 2.2rem 2.25rem 5rem;
+    }
+
+    .ask { max-width: 46rem; }
+
+    .ask label {
+      display: block;
+      font-size: 0.5rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .ask input {
+      width: 100%;
+      margin-top: 0.65rem;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--white);
+      font-family: var(--serif);
+      font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+      line-height: 1.25;
+      padding: 0.15rem 0 0.55rem;
+    }
+
+    .ask input::placeholder { color: rgba(244, 244, 242, 0.28); }
+    .ask input:focus { outline: none; border-bottom-color: var(--gold); }
+
+    .recs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem 1.15rem;
+      margin-top: 1.35rem;
+      max-width: 52rem;
+    }
+
+    .recs button {
+      background: none;
+      border: none;
+      padding: 0.1rem 0 0.28rem;
+      color: var(--mute);
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      box-shadow: inset 0 -1px 0 transparent;
+    }
+
+    .recs button:hover { color: rgba(244, 244, 242, 0.82); }
+    .recs button.is-on {
+      color: var(--gold);
+      box-shadow: inset 0 -1px 0 var(--gold);
+    }
+
+    .result {
+      margin-top: 3.4rem;
+      padding-top: 2.4rem;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .tree {
+      margin-top: 3.6rem;
+      padding-top: 1.6rem;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .tree-scroll {
+      margin-top: 1.15rem;
+      overflow-x: auto;
+    }
+
+    .tree-board {
+      position: relative;
+      margin: 0;
+    }
+
+    .tree-board svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .node {
+      position: absolute;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 5px 7px;
+      background: transparent;
+      border: 1px solid rgba(244, 244, 242, 0.16);
+      text-align: left;
+      color: rgba(244, 244, 242, 0.34);
+      overflow: hidden;
+    }
+
+    .node span {
+      display: block;
+      font-family: var(--serif);
+      font-size: 13px;
+      line-height: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .node b {
+      display: block;
+      margin-top: 1px;
+      font-weight: 400;
+      font-size: 9px;
+      line-height: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .node.is-path {
+      color: var(--white);
+      border-color: var(--gold);
+      background: rgba(232, 163, 23, 0.08);
+    }
+
+    .node.is-path b { color: var(--gold); }
+
+    .node.is-end {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #14110a;
+    }
+
+    .node.is-end b { color: #14110a; }
+    .node.is-on { outline: 1px solid var(--white); outline-offset: 1px; }
+
+    .gate {
+      margin: 1.4rem auto 0;
+      max-width: 36rem;
+      text-align: center;
+    }
+
+    .gate p {
+      font-size: 0.84rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: rgba(244, 244, 242, 0.62);
+    }
+
+    .gate .trace {
+      margin-top: 0.45rem;
+      color: rgba(244, 244, 242, 0.88);
+    }
+
+    .kicker {
+      display: block;
+      font-size: 0.5rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .status {
+      margin-top: 0.45rem;
+      font-family: var(--serif);
+      font-size: clamp(3rem, 6vw, 5.2rem);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--gold);
+    }
+
+    .status.is-open { color: var(--white); }
+
+    .claim {
+      margin-top: 1.15rem;
+      max-width: 36rem;
+      font-family: var(--serif);
+      font-size: clamp(1.25rem, 2vw, 1.65rem);
+      line-height: 1.35;
+      color: rgba(244, 244, 242, 0.92);
+    }
+
+    .detail {
+      margin-top: 0.9rem;
+      max-width: 36rem;
+      font-size: 0.92rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: rgba(244, 244, 242, 0.62);
+    }
+
+    .next { margin-top: 1.35rem; max-width: 36rem; }
+    .next p {
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: rgba(244, 244, 242, 0.88);
+    }
+
+    .stds {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 8.5rem));
+      gap: 0.45rem 1rem;
+      margin-top: 1.8rem;
+      list-style: none;
+    }
+
+    .stds li {
+      font-size: 0.48rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(244, 244, 242, 0.22);
+    }
+
+    .stds li.is-yes { color: var(--gold); }
+    .stds li.is-partial { color: rgba(244, 244, 242, 0.78); }
+
+    footer.site {
+      position: relative;
+      z-index: 10;
+      border-top: 1px solid var(--hairline);
+      padding: 1.35rem 2.25rem 1.75rem;
+    }
+
+    .footer-inner {
+      max-width: 88rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.62rem;
+      color: var(--mute);
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+    }
+
+    .footer-inner a { color: inherit; text-decoration: none; }
+    .footer-inner a:hover { color: var(--gold); }
+
+    @media (max-width: 800px) {
+      .stds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .recs button { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="grain" aria-hidden="true"></div>
+    <header>
+      <a class="logo" href="index.html">D<span class="y">Y</span>STIL</a>
+      <span class="here">A truth engine</span>
+    </header>
+    <main>
+      <form class="ask" id="ask">
+        <label for="topic">A topic</label>
+        <input id="topic" name="topic" type="text" autocomplete="off" placeholder="What do you want to know?" />
+      </form>
+      <div class="recs" id="recs" role="list"></div>
+      <div class="result" id="result" hidden>
+        <div class="verdict">
+          <span class="kicker" id="domain"></span>
+          <h1 class="status" id="status"></h1>
+          <p class="claim" id="claim"></p>
+          <p class="detail" id="detail"></p>
+          <div class="next">
+            <span class="kicker" id="next-kicker"></span>
+            <p id="next"></p>
+          </div>
+          <ul class="stds" id="stds"></ul>
+        </div>
+        <section class="tree" aria-label="Decision tree">
+          <span class="kicker">The path</span>
+          <div class="tree-scroll" id="tree"></div>
+          <div class="gate" id="gate"></div>
+        </section>
+      </div>
+    </main>
+    <footer class="site">
+      <div class="footer-inner">
+        <span><a href="index.html">D Y S T I L</a></span>
+        <span>A topic, walked to a verdict</span>
+      </div>
+    </footer>
+  </div>
+  <script src="truth-engine.js"></script>
+  <script>
+    var gates = {};
+    Truth.GATES.forEach(function (g) { gates[g.id] = g; });
+
+    var input = document.getElementById("topic");
+    var recs = document.getElementById("recs");
+    var result = document.getElementById("result");
+    var treeEl = document.getElementById("tree");
+    var gateEl = document.getElementById("gate");
+    var NW = 128;
+    var NH = 44;
+    var current = null;
+    var picked = null;
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function prose(s) {
+      return String(s).replace(/this canvas/gi, function (m, i, str) {
+        var prev = str.slice(0, i).trimEnd();
+        return !prev || /[.!?]$/.test(prev) ? "The engine" : "the engine";
+      });
+    }
+
+    function paintRecs(filtering) {
+      var q = filtering ? input.value.trim().toLowerCase() : "";
+      recs.innerHTML = Truth.EXAMPLES.filter(function (ex) {
+        if (!q) return true;
+        return ex.label.toLowerCase().indexOf(q) !== -1 || ex.topic.toLowerCase().indexOf(q) !== -1;
+      }).map(function (ex) {
+        var on = current && current.topic === ex.topic;
+        return '<button type="button" role="listitem" data-topic="' + esc(ex.topic) + '"' + (on ? ' class="is-on"' : "") + ">" + esc(ex.label) + "</button>";
+      }).join("");
+      recs.querySelectorAll("button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          input.value = btn.dataset.topic;
+          walk(btn.dataset.topic);
+        });
+      });
+    }
+
+    function showGate(id) {
+      picked = id;
+      treeEl.querySelectorAll(".node").forEach(function (el) {
+        el.classList.toggle("is-on", el.dataset.id === id);
+      });
+      var g = gates[id];
+      var trace = current && current.analysis.trace[id];
+      gateEl.innerHTML = "<p>" + esc(g ? g.rule : "") + "</p>" + (trace ? '<p class="trace">' + esc(trace) + "</p>" : "");
+    }
+
+    function treeLayout() {
+      var rankGap = 32;
+      var nodeGap = 10;
+      var pad = 12;
+      var ids = Truth.GATES.map(function (g) { return g.id; });
+      var known = {};
+      ids.forEach(function (id) { known[id] = true; });
+      var edges = Truth.EDGES;
+      var adj = {};
+      ids.forEach(function (id) { adj[id] = []; });
+      edges.forEach(function (e, i) {
+        if (known[e.from] && known[e.to]) adj[e.from].push({ to: e.to, idx: i });
+      });
+      var color = {};
+      ids.forEach(function (id) { color[id] = 0; });
+      var back = {};
+      function dfs(id) {
+        color[id] = 1;
+        adj[id].forEach(function (e) {
+          if (color[e.to] === 1) back[e.idx] = true;
+          else if (color[e.to] === 0) dfs(e.to);
+        });
+        color[id] = 2;
+      }
+      ids.forEach(function (id) { if (color[id] === 0) dfs(id); });
+      var kids = {};
+      var indeg = {};
+      ids.forEach(function (id) { kids[id] = []; indeg[id] = 0; });
+      edges.forEach(function (e, i) {
+        if (back[i] || !known[e.from] || !known[e.to]) return;
+        kids[e.from].push(e.to);
+        indeg[e.to] += 1;
+      });
+      var rank = {};
+      var queue = [];
+      ids.forEach(function (id) {
+        if (indeg[id] === 0) { rank[id] = 0; queue.push(id); }
+      });
+      var qi = 0;
+      while (qi < queue.length) {
+        var id = queue[qi++];
+        var r = rank[id];
+        kids[id].forEach(function (to) {
+          if (rank[to] == null || r + 1 > rank[to]) {
+            rank[to] = r + 1;
+            queue.push(to);
+          }
+        });
+      }
+      ids.forEach(function (id) { if (rank[id] == null) rank[id] = 0; });
+      var rows = {};
+      var maxR = 0;
+      ids.forEach(function (id) {
+        var r = rank[id];
+        if (!rows[r]) rows[r] = [];
+        rows[r].push(id);
+        if (r > maxR) maxR = r;
+      });
+      var pos = {};
+      var y = pad;
+      var r;
+      for (r = 0; r <= maxR; r++) {
+        (rows[r] || []).forEach(function (id, t) {
+          pos[id] = { x: pad + t * (NW + nodeGap), y: y, rank: r };
+        });
+        y += NH + rankGap;
+      }
+      var widths = {};
+      var widest = 0;
+      for (r = 0; r <= maxR; r++) {
+        var n = (rows[r] || []).length;
+        widths[r] = n ? n * NW + (n - 1) * nodeGap : 0;
+        if (widths[r] > widest) widest = widths[r];
+      }
+      ids.forEach(function (id) {
+        pos[id].x += (widest - widths[pos[id].rank]) / 2;
+      });
+      var laid = edges.map(function (e, i) {
+        var a = pos[e.from];
+        var b = pos[e.to];
+        if (!a || !b) return null;
+        var down = b.y >= a.y + NH;
+        var up = a.y >= b.y + NH;
+        var sourceX, sourceY, targetX, targetY;
+        if (down || (back[i] && !up)) {
+          sourceX = a.x + NW / 2; sourceY = a.y + NH;
+          targetX = b.x + NW / 2; targetY = b.y;
+        } else if (up || back[i]) {
+          sourceX = a.x + NW / 2; sourceY = a.y;
+          targetX = b.x + NW / 2; targetY = b.y + NH;
+        } else {
+          sourceX = a.x + (b.x > a.x ? NW : 0); sourceY = a.y + NH / 2;
+          targetX = b.x + (b.x > a.x ? 0 : NW); targetY = b.y + NH / 2;
+        }
+        return { from: e.from, to: e.to, sourceX: sourceX, sourceY: sourceY, targetX: targetX, targetY: targetY };
+      }).filter(Boolean);
+      var maxX = pad;
+      var maxY = pad;
+      ids.forEach(function (id) {
+        if (pos[id].x + NW > maxX) maxX = pos[id].x + NW;
+        if (pos[id].y + NH > maxY) maxY = pos[id].y + NH;
+      });
+      return { pos: pos, edges: laid, width: maxX + pad, height: maxY + pad };
+    }
+
+    function walk(topic) {
+      var analysis = Truth.analyze(topic);
+      current = { topic: topic, analysis: analysis };
+      result.hidden = false;
+      paintRecs(false);
+
+      var open = analysis.phase === "parked" || analysis.status === "Refuted";
+      document.getElementById("domain").textContent = analysis.domain;
+      var status = document.getElementById("status");
+      status.textContent = analysis.status;
+      status.classList.toggle("is-open", open);
+      document.getElementById("claim").textContent = analysis.claim;
+      document.getElementById("detail").textContent = prose(analysis.detail);
+      document.getElementById("next-kicker").textContent = analysis.phase === "parked" ? "Next" : analysis.phase === "arrived" ? "Final form" : "Closed";
+      document.getElementById("next").textContent = prose(analysis.next);
+
+      document.getElementById("stds").innerHTML = Truth.STANDARD_META.map(function (s) {
+        var mark = analysis.standards[s.id].applies;
+        var cls = mark === "yes" ? "is-yes" : mark === "partial" ? "is-partial" : "";
+        return '<li class="' + cls + '" title="' + esc(analysis.standards[s.id].note) + '">' + esc(s.name) + "</li>";
+      }).join("");
+
+      var lay = treeLayout();
+      var on = {};
+      analysis.path.forEach(function (id) { on[id] = true; });
+      var settled = analysis.phase !== "parked";
+      var lines = lay.edges.map(function (e) {
+        var dy = Math.max(12, (e.targetY - e.sourceY) / 2);
+        var lit = on[e.from] && on[e.to];
+        return '<path d="M ' + e.sourceX + " " + e.sourceY + " C " + e.sourceX + " " + (e.sourceY + dy) + ", " + e.targetX + " " + (e.targetY - dy) + ", " + e.targetX + " " + e.targetY + '" fill="none" stroke="' + (lit ? "rgba(232,163,23,0.9)" : "rgba(244,244,242,0.22)") + '" stroke-width="' + (lit ? "1.75" : "1") + '" />';
+      }).join("");
+      var nodes = Truth.GATES.map(function (g) {
+        var p = lay.pos[g.id];
+        if (!p) return "";
+        var end = g.id === analysis.terminalId;
+        var cls = "node" + (on[g.id] ? " is-path" : "") + (end && settled ? " is-end" : "");
+        return '<button type="button" class="' + cls + '" data-id="' + g.id + '" style="left:' + p.x + "px;top:" + p.y + "px;width:" + NW + "px;height:" + NH + 'px"><span>' + esc(g.title) + "</span><b>" + esc(g.kicker) + "</b></button>";
+      }).join("");
+      treeEl.innerHTML = '<div class="tree-board" style="width:' + lay.width + "px;height:" + lay.height + 'px"><svg aria-hidden="true">' + lines + "</svg>" + nodes + "</div>";
+      treeEl.querySelectorAll(".node").forEach(function (el) {
+        el.addEventListener("click", function () { showGate(el.dataset.id); });
+      });
+      var endNode = treeEl.querySelector('.node[data-id="' + analysis.terminalId + '"]');
+      if (endNode) treeEl.scrollLeft = Math.max(0, endNode.offsetLeft + NW / 2 - treeEl.clientWidth / 2);
+      showGate(analysis.terminalId);
+    }
+
+    document.getElementById("ask").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var topic = input.value.trim();
+      if (!topic) return;
+      walk(topic);
+      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    input.addEventListener("input", function () { paintRecs(true); });
+    input.value = "Smoking raises the risk of lung cancer";
+    walk(input.value);
+  </script>
+</body>
+</html>
